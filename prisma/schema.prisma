@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+id Int @id @default(autoincrement())
+username String 
+email String @unique
+password String
+profileImage String?
+createdAt DateTime @default(now())
+
+//posts
+posts Post[]
+
+//comments
+comments Comment[]
+
+// follows
+followers Follows[] @relation("user_followers")
+following Follows[] @relation("user_following")
+}
+
+model Post{
+  id Int @id @default(autoincrement())
+  content String
+  postImage String?
+  createdAt DateTime @default(now())
+
+  // relations
+
+  //user that made the post
+  authorId Int
+  author User @relation(fields: [authorId],references: [id])
+  //many comments under a post
+  comments Comment[]
+}
+
+model Comment {
+id Int @id @default(autoincrement())
+content String
+createdAt DateTime @default(now())
+
+//post being commented on
+postId Int
+post Post @relation(fields: [postId],references: [id])
+
+//user who commented 
+authorId Int
+author User @relation(fields: [authorId],references: [id])
+}
+
+model Follows {
+id Int @id @default(autoincrement())
+
+followerId Int
+followingId Int
+
+follower    User @relation("user_following", fields: [followerId], references: [id])
+following   User @relation("user_followers", fields: [followingId], references: [id])
+
+@@unique([followerId,followingId]) //to prevent duplicate follows probably from the same user
+}
