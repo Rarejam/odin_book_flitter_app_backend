@@ -18,6 +18,7 @@ const guestController = async (req, res) => {
         data: {
           username: "Guest",
           email: "guest@example.com",
+          bio: "I was too lazy to signup/login",
           password: hashedPassword,
         },
       });
@@ -37,6 +38,7 @@ const guestController = async (req, res) => {
         id: guestUser.id,
         username: guestUser.username,
         email: guestUser.email,
+        bio: guestUser.bio,
       },
     });
   } catch (error) {

@@ -1,22 +1,20 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const userController = async (req, res) => {
+const profileController = async (req, res) => {
+  const { profileId } = req.params;
   try {
-    const payload = req.user; //  gets this from the middleware jwtconfig
-    if (!payload) {
-      return res.status(400).json({ message: "no User Found" });
-    }
     const user = await prisma.user.findUnique({
       where: {
-        id: payload.id,
+        //dont forget to parseInt the profileId to convert it to integer
+        id: parseInt(profileId),
       },
       select: {
         id: true,
-        username: true,
         email: true,
-        profileImage: true,
+        username: true,
         bio: true,
+        profileImage: true,
         createdAt: true,
         _count: {
           select: {
@@ -26,15 +24,14 @@ const userController = async (req, res) => {
         },
       },
     });
-
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     return res.status(200).json(user);
   } catch (error) {
-    console.error("UserController error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.log(error);
+    res.status(500).json("Internal Server Error");
   }
 };
-module.exports = userController;
+module.exports = profileController;

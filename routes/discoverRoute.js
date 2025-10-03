@@ -13,6 +13,7 @@ discoverRoute.get("/", async (req, res) => {
           select: {
             username: true,
             email: true,
+            profileImage: true,
           },
         },
       },
