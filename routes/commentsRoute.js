@@ -26,6 +26,9 @@ commentRoute.get("/:id", async (req, res) => {
                 profileImage: true,
               },
             },
+            _count: {
+              select: { likes: true },
+            },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -45,4 +48,22 @@ commentRoute.get("/:id", async (req, res) => {
 
 //create a comment on a specific post
 commentRoute.post("/:id", commentsController);
+
+//delete a particular user comment
+commentRoute.delete("/:commentId", async (req, res) => {
+  const { commentId } = req.params;
+  try {
+    // ✅ Step 1: Delete all likes for this comment first
+    await prisma.commentLike.deleteMany({
+      where: { commentId: parseInt(commentId) },
+    });
+
+    await prisma.comment.delete({ where: { id: parseInt(commentId) } });
+    return res.status(200).json({ success: true, id: parseInt(commentId) });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json("Internal Server Error");
+  }
+});
+
 module.exports = commentRoute;

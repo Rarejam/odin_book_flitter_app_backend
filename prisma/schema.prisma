@@ -20,6 +20,7 @@ username String
 email String @unique
 password String
 profileImage String?
+profileImagePublicId String? 
 bio String?
 createdAt DateTime @default(now())
 
@@ -32,12 +33,51 @@ comments Comment[]
 // follows
 followers Follows[] @relation("user_followers")
 following Follows[] @relation("user_following")
+
+// reshares
+ resharedPosts          ResharedPost[]
+  resharedComments       ResharedComment[]
+
+  //likes
+  postLikes    PostLike[]
+  commentLikes CommentLike[]
+
+    //private messages
+    
+sentMessages      PrivateMessage[] @relation("SentMessages")
+receivedMessages  PrivateMessage[] @relation("ReceivedMessages")
 }
+model ResharedPost {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
+}
+
+model ResharedComment {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  commentId  Int
+  createdAt  DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  comment Comment @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, commentId])
+
+}
+
 
 model Post{
   id Int @id @default(autoincrement())
-  content String
+  content String?
   postImage String?
+  imagePublicId  String?   // <-- store Cloudinary public_id here
   createdAt DateTime @default(now())
 
   // relations
@@ -47,6 +87,12 @@ model Post{
   author User @relation(fields: [authorId],references: [id])
   //many comments under a post
   comments Comment[]
+
+//reshares
+   reshares    ResharedPost[] 
+
+    // likes
+   likes    PostLike[]
 }
 
 model Comment {
@@ -61,6 +107,12 @@ post Post @relation(fields: [postId],references: [id])
 //user who commented 
 authorId Int
 author User @relation(fields: [authorId],references: [id])
+
+//reshare
+ reshares    ResharedComment[] 
+
+ // likes
+ likes CommentLike[]
 }
 
 model Follows {
@@ -73,4 +125,40 @@ follower    User @relation("user_following", fields: [followerId], references: [
 following   User @relation("user_followers", fields: [followingId], references: [id])
 
 @@unique([followerId,followingId]) //to prevent duplicate follows probably from the same user
+}
+
+model PostLike {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId]) // prevent double-likes
+}
+
+model CommentLike {
+  id         Int      @id @default(autoincrement())
+  commentId  Int
+  userId     Int
+  createdAt  DateTime @default(now())
+
+  comment Comment @relation(fields: [commentId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([commentId, userId])
+}
+model PrivateMessage{
+  id Int @id @default(autoincrement())
+  content String
+   chatImage  String?   
+   imagePublicId String?
+  senderId Int
+  receiverId Int
+  date DateTime @default(now())
+  // use double quotes for @relation() namings
+  sender User @relation("SentMessages",fields: [senderId],references: [id])
+receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
 }

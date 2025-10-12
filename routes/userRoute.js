@@ -3,6 +3,7 @@ const express = require("express");
 const userRoute = express.Router();
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+const { upload } = require("../cloudinaryConfig");
 
 // GET all users
 userRoute.get("/", userController);
@@ -19,8 +20,12 @@ userRoute.get("/posts", async (req, res) => {
           select: { id: true, username: true, email: true, profileImage: true },
         },
         comments: true,
+        _count: {
+          select: {
+            reshares: true,
+          },
+        },
         // likes: true,
-        // shares: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -80,6 +85,11 @@ userRoute.get("/following", async (req, res) => {
         },
         comments: true,
         // likes: true, // add later if you have likes model
+        _count: {
+          select: {
+            reshares: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc", // newest first
@@ -151,6 +161,41 @@ userRoute.get("/follower-users", async (req, res) => {
     res.status(200).json(followerUsers);
   } catch (error) {
     console.error(error);
+    res.status(500).json("Internal Server Error");
+  }
+});
+//uplaod image
+userRoute.post("/picture", upload.single("profile_image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const userId = req.user.id;
+
+    // 1. Check if user already has an image
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (user && user.profileImagePublicId) {
+      // Delete old image from Cloudinary
+      await cloudinary.uploader.destroy(user.profileImagePublicId);
+    }
+
+    // 2. Save new image
+    const imageUrl = req.file.path; // Cloudinary URL
+    const publicId = req.file.filename; // Cloudinary public_id
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        profileImage: imageUrl,
+        profileImagePublicId: publicId,
+      },
+    });
+
+    res.status(200).json({ message: "Uploaded successfully", imageUrl });
+  } catch (error) {
+    console.error("Upload error:", error);
     res.status(500).json("Internal Server Error");
   }
 });
