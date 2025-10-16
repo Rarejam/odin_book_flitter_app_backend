@@ -3,7 +3,7 @@ const express = require("express");
 const userRoute = express.Router();
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const { upload } = require("../cloudinaryConfig");
+const { upload, cloudinary } = require("../cloudinaryConfig");
 
 // GET all users
 userRoute.get("/", userController);

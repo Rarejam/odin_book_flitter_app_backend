@@ -50,11 +50,20 @@ discoverRoute.delete("/:postId", async (req, res) => {
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
+    //  Delete all likes linked to this post
+    await prisma.postLike.deleteMany({
+      where: { postId: parseInt(postId) },
+    });
     //delet comments under post first
     await prisma.comment.deleteMany({
       where: {
         postId: parseInt(postId),
       },
+    });
+
+    // 2️⃣ Delete all reshares referencing this post
+    await prisma.resharedPost.deleteMany({
+      where: { postId: parseInt(postId) },
     });
 
     // 🖼️ 3️⃣ Delete Cloudinary image if it exists
